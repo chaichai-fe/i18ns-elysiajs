@@ -103,6 +103,7 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
     // 需要认证的导出接口
     .get('/export/json', async ({ bearer, jwt, set }) => {
         try {
+            // 验证有无bearer
             if (!bearer) {
                 set.status = 401
                 return {
@@ -111,7 +112,7 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
                 }
             }
 
-            // 验证JWT token
+            // 验证JWT token是否有效
             const payload = await jwt.verify(bearer)
             if (!payload) {
                 set.status = 401
