@@ -8,6 +8,7 @@
     "scripts": {
         "dev": "bun run --hot src/index.ts",
         "build": "bun build src/index.ts --outdir=dist --target=bun",
+        "build:exe": "bun build --compile --minify-whitespace --minify-syntax --outfile server src/index.ts",
         "start": "bun run dist/index.js",
         "db:generate": "drizzle-kit generate",
         "db:migrate": "drizzle-kit migrate",
