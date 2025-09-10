@@ -10,6 +10,8 @@ export const langTagRoutes = new Elysia({ prefix: '/lang-tags' })
             const page = Number(query.page ?? 1)
             const pageSize = Number(query.pageSize ?? 10)
 
+            console.log(page, pageSize)
+
             const result = await langTagService.findAll({ page, pageSize } as PaginationDto)
             return {
                 statusCode: 200,
