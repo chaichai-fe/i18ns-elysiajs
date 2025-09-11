@@ -15,7 +15,7 @@ export const businessTagRoutes = new Elysia({ prefix: '/business-tags' })
     })
     .post('/', async ({ body, set }) => {
         try {
-            const result = await businessTagService.create(body as CreateBusinessTagDto)
+            const result = await businessTagService.create(body)
             return {
                 statusCode: 201,
                 message: 'create success',
@@ -52,7 +52,7 @@ export const businessTagRoutes = new Elysia({ prefix: '/business-tags' })
     })
     .put('/:id', async ({ params, body, set }) => {
         try {
-            const result = await businessTagService.update(+params.id, body as CreateBusinessTagDto)
+            const result = await businessTagService.update(+params.id, body)
             return {
                 statusCode: 200,
                 message: 'update success',

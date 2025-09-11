@@ -9,10 +9,7 @@ export const langTagRoutes = new Elysia({ prefix: '/lang-tags' })
         try {
             const page = Number(query.page ?? 1)
             const pageSize = Number(query.pageSize ?? 10)
-
-            console.log(page, pageSize)
-
-            const result = await langTagService.findAll({ page, pageSize } as PaginationDto)
+            const result = await langTagService.findAll({ page, pageSize })
             return {
                 statusCode: 200,
                 message: 'find all success',
@@ -28,7 +25,7 @@ export const langTagRoutes = new Elysia({ prefix: '/lang-tags' })
     })
     .post('/', async ({ body, set }) => {
         try {
-            const result = await langTagService.create(body as CreateLangTagDto)
+            const result = await langTagService.create(body)
             return {
                 statusCode: 201,
                 message: 'create success',
@@ -65,7 +62,7 @@ export const langTagRoutes = new Elysia({ prefix: '/lang-tags' })
     })
     .put('/:id', async ({ params, body, set }) => {
         try {
-            const result = await langTagService.update(+params.id, body as CreateLangTagDto)
+            const result = await langTagService.update(+params.id, body)
             return {
                 statusCode: 200,
                 message: 'update success',
