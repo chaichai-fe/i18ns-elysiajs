@@ -24,7 +24,7 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
     })
     .post('/', async ({ body, set }) => {
         try {
-            const result = await translationsService.create(body as CreateTranslationDto)
+            const result = await translationsService.create(body)
             return {
                 statusCode: 201,
                 message: 'create success',
@@ -63,7 +63,7 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
     })
     .put('/:id', async ({ params, body, set }) => {
         try {
-            const result = await translationsService.update(+params.id, body as CreateTranslationDto)
+            const result = await translationsService.update(+params.id, body)
             return {
                 statusCode: 200,
                 message: 'update success',
