@@ -1,21 +1,21 @@
 export interface CreateUserDto {
-    name: string
-    email: string
-    password: string
+  name: string
+  email: string
+  password: string
 }
 
 export interface LoginUserDto {
-    email: string
-    password: string
+  email: string
+  password: string
 }
 
 export interface User {
-    id: number
-    name: string
-    email: string
+  id: number
+  name: string
+  email: string
 }
 
 export interface AuthResponse {
-    user: User
-    token: string
+  user: User
+  token: string
 }

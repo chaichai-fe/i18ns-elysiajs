@@ -2,7 +2,6 @@ import { Elysia, t } from 'elysia'
 import { bearer } from '@elysiajs/bearer'
 import { jwt } from '@elysiajs/jwt'
 import { TranslationsService } from './service'
-import type { CreateTranslationDto } from './types'
 
 const translationsService = new TranslationsService()
 
