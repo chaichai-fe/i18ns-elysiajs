@@ -4,26 +4,19 @@ import { authRoutes } from './auth/routes'
 import { businessTagRoutes } from './business-tag/routes'
 import { langTagRoutes } from './lang-tag/routes'
 import { translationsRoutes } from './translations/routes'
+import { apiLogRoutes } from './api-log/routes'
 import { openapi } from '@elysiajs/openapi'
-import { validateDatabaseConnection } from './db/connection'
+import { databaseHealthPlugin, apiLoggerPlugin } from './plugins'
 
-// Database connection validation and application startup function
+// Application startup function
 async function startApplication() {
   try {
-    console.log('🚀 Translation API is starting...')
+    console.log('🚀 翻译API正在启动...')
 
-    // Validate database connection
-    const isDatabaseConnected = await validateDatabaseConnection()
-
-    if (!isDatabaseConnected) {
-      console.error(
-        '💥 Application startup failed: Database connection validation failed'
-      )
-      process.exit(1)
-    }
-
-    // Create Elysia application
+    // Create Elysia application with database health check plugin
     const app = new Elysia()
+      .use(databaseHealthPlugin) // 数据库健康检查插件会在启动时自动执行
+      .use(apiLoggerPlugin) // API日志记录插件 - 全局使用
       .use(
         cors({
           origin: true,
@@ -42,12 +35,15 @@ async function startApplication() {
           },
         })
       )
-      .group('/api', (app) =>
-        app
-          .use(authRoutes)
-          .use(businessTagRoutes)
-          .use(langTagRoutes)
-          .use(translationsRoutes)
+      .group(
+        '/api',
+        (app) =>
+          app
+            .use(authRoutes)
+            .use(businessTagRoutes)
+            .use(langTagRoutes)
+            .use(translationsRoutes)
+            .use(apiLogRoutes) // API日志查询路由
       )
       .get('/', () => ({
         message: 'I18n Translation API is running!',
@@ -56,15 +52,14 @@ async function startApplication() {
       }))
       .listen(process.env.PORT || 3000)
 
-    console.log('✅ Database connection validation passed')
     console.log(
-      `🦊 Translation API is running: http://${app.server?.hostname}:${app.server?.port}`
+      `🦊 翻译API运行中: http://${app.server?.hostname}:${app.server?.port}`
     )
     console.log(
-      `📚 API Documentation: http://${app.server?.hostname}:${app.server?.port}/docs`
+      `📚 API文档: http://${app.server?.hostname}:${app.server?.port}/docs`
     )
   } catch (error) {
-    console.error('💥 Application startup failed:', error)
+    console.error('💥 应用启动失败:', error)
     process.exit(1)
   }
 }

@@ -15,7 +15,7 @@ export async function validateDatabaseConnection(): Promise<boolean> {
   }
 
   try {
-    console.log('🔄 Validating database connection...')
+    console.log('🔄 正在验证数据库连接...')
 
     // Create database connection
     const connection = await mysql.createConnection(connectionString)
@@ -26,10 +26,10 @@ export async function validateDatabaseConnection(): Promise<boolean> {
     // Close the connection
     await connection.end()
 
-    console.log('✅ Database connection validation successful')
+    console.log('✅ 数据库连接验证成功')
     return true
   } catch (error) {
-    console.error('❌ Database connection validation failed:', error)
+    console.error('❌ 数据库连接验证失败:', error)
     return false
   }
 }
@@ -45,9 +45,9 @@ export function initializeDatabase() {
     throw new Error('DATABASE_URL environment variable is not set')
   }
 
-  console.log('🔄 Initializing database connection...')
+  console.log('🔄 正在初始化数据库连接...')
   const db = drizzle(connectionString)
-  console.log('✅ Database connection initialization successful')
+  console.log('✅ 数据库连接初始化成功')
 
   return db
 }

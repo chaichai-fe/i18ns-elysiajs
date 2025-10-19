@@ -55,3 +55,12 @@ export const userTable = mysqlTable('users', {
   email: varchar({ length: 255 }).notNull(),
   password: varchar({ length: 255 }).notNull(),
 })
+
+export const apiLogTable = mysqlTable('api_logs', {
+  id: int().primaryKey().autoincrement(),
+  url: varchar({ length: 500 }).notNull(),
+  method: varchar({ length: 10 }).notNull(),
+  requestTime: timestamp('request_time').notNull().defaultNow(),
+  requestParams: json('request_params').$type<Record<string, any>>(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
