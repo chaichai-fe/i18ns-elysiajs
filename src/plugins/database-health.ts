@@ -1,5 +1,33 @@
 import { Elysia } from 'elysia'
-import { validateDatabaseConnection } from '../db/connection'
+import db from '../db'
+
+/**
+ * 验证数据库连接是否正常
+ * @returns Promise<boolean> 连接是否成功
+ */
+async function validateDatabaseConnection(): Promise<boolean> {
+  try {
+    console.log('🔄 正在验证数据库连接...')
+
+    // 执行一个简单的查询来测试数据库连接
+    // 使用 MySQL 的 SELECT 1 查询，这是最轻量级的连接测试
+    const result = await db.execute('SELECT 1 as test')
+
+    if (result && result.length > 0) {
+      console.log('✅ 数据库连接验证成功')
+      return true
+    } else {
+      console.error('❌ 数据库连接验证失败: 查询结果为空')
+      return false
+    }
+  } catch (error) {
+    console.error(
+      '❌ 数据库连接验证失败:',
+      error instanceof Error ? error.message : 'Unknown error'
+    )
+    return false
+  }
+}
 
 /**
  * Database Health Check Plugin
@@ -46,6 +74,9 @@ export const databaseHealthPlugin = new Elysia({ name: 'database-health' })
     console.log('✅ 数据库连接检测成功，应用可以正常启动')
   })
   .onError(({ error }) => {
-    console.error('💥 数据库健康检查插件错误:', error.message)
+    console.error(
+      '💥 数据库健康检查插件错误:',
+      error instanceof Error ? error.message : 'Unknown error'
+    )
     process.exit(1)
   })
