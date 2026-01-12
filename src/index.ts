@@ -26,7 +26,7 @@ async function startApplication() {
 
     // Create Elysia application
     const app = new Elysia()
-      .onError(createErrorHandler(env))
+      .onError(createErrorHandler())
       .use(
         cors({
           origin: true,

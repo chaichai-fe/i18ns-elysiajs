@@ -4,10 +4,14 @@ import type { CreateUserDto, LoginUserDto, AuthResponse } from './types'
 import { eq } from 'drizzle-orm'
 import { ConflictError, UnauthorizedError } from '../common/errors'
 
+type AuthJWTPayload = {
+  userId: number
+}
+
 export class AuthService {
   async register(
     createUserDto: CreateUserDto,
-    signJWT: (payload: any) => Promise<string>
+    signJWT: (payload: AuthJWTPayload) => Promise<string>
   ): Promise<AuthResponse> {
     // Check if user already exists
     const existingUser = await db
@@ -53,7 +57,7 @@ export class AuthService {
 
   async login(
     loginDto: LoginUserDto,
-    signJWT: (payload: any) => Promise<string>
+    signJWT: (payload: AuthJWTPayload) => Promise<string>
   ): Promise<AuthResponse> {
     // Find user
     const [user] = await db

@@ -55,6 +55,23 @@ export class ConflictError extends AppError {
 
 type EnvLike = { NODE_ENV: string }
 
+type ErrorResponse = {
+  success: false
+  statusCode: number
+  error: {
+    code: string
+    message: string
+    details?: unknown
+  }
+}
+
+type OnErrorContext = {
+  code: unknown
+  error: unknown
+  // Elysia 的 set.status 是一个联合类型（可能是 number 或 status text）
+  set: { status?: number | string }
+}
+
 /**
  * 创建全局错误处理器（用于 Elysia `.onError(...)`）
  *
@@ -66,13 +83,14 @@ type EnvLike = { NODE_ENV: string }
  * 响应结构固定为：
  * `{ success: false, statusCode, error: { code, message, details? } }`
  */
-export function createErrorHandler(appEnv: EnvLike) {
+export function createErrorHandler() {
   // Elysia 的 onError context 类型比较复杂，这里保持“结构化取值 + 宽类型”
   // 来避免在入口处引入大量泛型/联合类型噪音。
-  return (context: any) => {
-    const code = context?.code as string
-    const error = context?.error as unknown
-    const set = context?.set as any
+
+  return (context: OnErrorContext): ErrorResponse => {
+    const code = String(context.code)
+    const error = context.error
+    const set = context.set
 
     /**
      * 统一构造错误响应体，并同步写入 HTTP 状态码（`set.status`）
@@ -82,8 +100,8 @@ export function createErrorHandler(appEnv: EnvLike) {
       errorCode: string,
       message: string,
       details?: unknown
-    ) => {
-      if (set) set.status = status
+    ): ErrorResponse => {
+      set.status = status
       return {
         success: false,
         statusCode: status,
@@ -105,7 +123,7 @@ export function createErrorHandler(appEnv: EnvLike) {
      * - PARSE：请求体解析失败（常见为 JSON 格式错误）
      * - NOT_FOUND：路由未匹配
      */
-    const codeMap: Record<string, (err: unknown) => any> = {
+    const codeMap: Record<string, (err: unknown) => ErrorResponse> = {
       VALIDATION: (err) =>
         toErrorResponse(
           400,
@@ -125,10 +143,7 @@ export function createErrorHandler(appEnv: EnvLike) {
 
     const handler = codeMap[code]
     if (handler) {
-      return (
-        handler(error) ??
-        toErrorResponse(500, 'INTERNAL_SERVER_ERROR', 'Internal Server Error', error)
-      )
+      return handler(error)
     }
 
     console.error('💥 Unhandled error:', error)
