@@ -7,7 +7,7 @@ import { translationsRoutes } from './translations/routes'
 import { openapi } from '@elysiajs/openapi'
 import { validateDatabaseConnection } from './db/connection'
 import { env } from './config/env'
-import { AppError } from './common/errors'
+import { createErrorHandler } from './common/errors'
 
 // Database connection validation and application startup function
 async function startApplication() {
@@ -26,40 +26,7 @@ async function startApplication() {
 
     // Create Elysia application
     const app = new Elysia()
-      .onError(({ code, error, set }) => {
-        if (error instanceof AppError) {
-          set.status = error.status
-          return {
-            statusCode: error.status,
-            code: error.code,
-            message: error.message,
-            ...(error.details !== undefined ? { details: error.details } : {}),
-          }
-        }
-
-        // Elysia validation errors (schema/body/query/params)
-        if (code === 'VALIDATION') {
-          set.status = 400
-          return {
-            statusCode: 400,
-            code: 'VALIDATION_ERROR',
-            message: error.message,
-          }
-        }
-
-        console.error('💥 Unhandled error:', error)
-        set.status = 500
-        return {
-          statusCode: 500,
-          code: 'INTERNAL_SERVER_ERROR',
-          message:
-            env.NODE_ENV === 'production'
-              ? 'Internal Server Error'
-              : error instanceof Error
-                ? error.message
-                : 'Internal Server Error',
-        }
-      })
+      .onError(createErrorHandler(env))
       .use(
         cors({
           origin: true,

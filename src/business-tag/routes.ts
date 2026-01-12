@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { BusinessTagService } from './service'
-import { parseId } from '../common/parse'
+import { BadRequestError } from '../common/errors'
 
 const businessTagService = new BusinessTagService()
 
@@ -44,7 +44,10 @@ export const businessTagRoutes = new Elysia({ prefix: '/business-tags' })
   .get(
     '/:id',
     async ({ params }) => {
-      const id = parseId(params.id)
+      const id = Number(params.id)
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new BadRequestError('id must be a positive integer')
+      }
       const result = await businessTagService.findById(id)
       return {
         statusCode: 200,
@@ -61,7 +64,10 @@ export const businessTagRoutes = new Elysia({ prefix: '/business-tags' })
   .put(
     '/:id',
     async ({ params, body }) => {
-      const id = parseId(params.id)
+      const id = Number(params.id)
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new BadRequestError('id must be a positive integer')
+      }
       const result = await businessTagService.update(id, body)
       return {
         statusCode: 200,
@@ -82,7 +88,10 @@ export const businessTagRoutes = new Elysia({ prefix: '/business-tags' })
   .delete(
     '/:id',
     async ({ params }) => {
-      const id = parseId(params.id)
+      const id = Number(params.id)
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new BadRequestError('id must be a positive integer')
+      }
       const result = await businessTagService.remove(id)
       return {
         statusCode: 200,

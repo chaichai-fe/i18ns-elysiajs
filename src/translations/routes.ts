@@ -2,9 +2,8 @@ import { Elysia, t } from 'elysia'
 import { bearer } from '@elysiajs/bearer'
 import { jwt } from '@elysiajs/jwt'
 import { TranslationsService } from './service'
-import { parseId } from '../common/parse'
 import { env } from '../config/env'
-import { UnauthorizedError } from '../common/errors'
+import { BadRequestError, UnauthorizedError } from '../common/errors'
 
 const translationsService = new TranslationsService()
 
@@ -61,7 +60,10 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
   .get(
     '/:id',
     async ({ params }) => {
-      const id = parseId(params.id)
+      const id = Number(params.id)
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new BadRequestError('id must be a positive integer')
+      }
       const result = await translationsService.findById(id)
       return {
         statusCode: 200,
@@ -78,7 +80,10 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
   .put(
     '/:id',
     async ({ params, body }) => {
-      const id = parseId(params.id)
+      const id = Number(params.id)
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new BadRequestError('id must be a positive integer')
+      }
       const result = await translationsService.update(id, body)
       return {
         statusCode: 200,
@@ -101,7 +106,10 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
   .delete(
     '/:id',
     async ({ params }) => {
-      const id = parseId(params.id)
+      const id = Number(params.id)
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new BadRequestError('id must be a positive integer')
+      }
       const result = await translationsService.remove(id)
       return {
         statusCode: 200,
