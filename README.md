@@ -77,11 +77,11 @@ i18ns-elysiajs/
 │   │   ├── routes.ts            # 认证路由定义
 │   │   ├── service.ts           # 认证业务逻辑
 │   │   └── types.ts             # 认证相关类型定义
-│   ├── businessTag/             # 业务标签模块
+│   ├── business-tag/            # 业务标签模块
 │   │   ├── routes.ts            # 业务标签路由
 │   │   ├── service.ts           # 业务标签服务
 │   │   └── types.ts             # 业务标签类型
-│   ├── langTag/                 # 语言标签模块
+│   ├── lang-tag/                # 语言标签模块
 │   │   ├── routes.ts            # 语言标签路由
 │   │   ├── service.ts           # 语言标签服务
 │   │   └── types.ts             # 语言标签类型
@@ -89,15 +89,15 @@ i18ns-elysiajs/
 │   │   ├── routes.ts            # 翻译路由
 │   │   ├── service.ts           # 翻译服务
 │   │   └── types.ts             # 翻译类型
+│   ├── env-config/              # 环境变量集中校验
+│   │   └── env.ts               # 读取/校验 DATABASE_URL/JWT_SECRET/PORT 等
 │   ├── db/                      # 数据库配置
 │   │   ├── index.ts             # 数据库连接配置
+│   │   ├── test-db-connect.ts   # 启动时数据库连通性检测
 │   │   └── schema.ts            # 数据库模式定义
+│   ├── common/                  # 公共能力
+│   │   └── errors.ts            # 统一错误类型 + onError 处理器
 │   └── index.ts                 # 应用入口文件
-├── drizzle/                     # 数据库迁移文件
-│   ├── 0000_slimy_frank_castle.sql  # 初始迁移脚本
-│   └── meta/                    # 迁移元数据
-│       ├── _journal.json        # 迁移日志
-│       └── 0000_snapshot.json   # 数据库快照
 ├── node_modules/                # 依赖包目录
 ├── dist/                        # 构建输出目录
 ├── package.json                 # 项目配置文件
@@ -105,8 +105,6 @@ i18ns-elysiajs/
 ├── drizzle.config.ts           # Drizzle ORM 配置
 ├── bun.lock                    # Bun 锁定文件
 ├── README.md                   # 项目说明
-├── MIGRATION_GUIDE.md          # 迁移指南
-└── PROJECT_DOCUMENTATION.md    # 项目文档（本文件）
 ```
 
 ---
@@ -123,7 +121,8 @@ i18ns-elysiajs/
   "scripts": {
     "dev": "bun run --hot src/index.ts", // 开发模式（热重载）
     "build": "bun build src/index.ts --outdir=dist --target=bun", // 构建生产版本
-    "start": "bun run dist/index.js", // 启动生产服务器
+    "build:exe": "bun build --compile --minify-whitespace --minify-syntax --outfile server src/index.ts", // 构建可执行文件
+    "start": "./server", // 启动生产服务器（可执行文件）
     "db:generate": "drizzle-kit generate", // 生成数据库迁移文件
     "db:migrate": "drizzle-kit migrate", // 执行数据库迁移
     "db:studio": "drizzle-kit studio", // 启动数据库管理界面
@@ -413,6 +412,22 @@ bun run db:studio
 
 ## 🔌 API 接口详解
 
+### 统一错误响应格式
+
+当请求触发业务错误（例如 404/401）或框架校验错误（例如参数校验失败）时，会返回统一结构：
+
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "....",
+    "details": {}
+  }
+}
+```
+
 ### 认证模块 (`/api/auth`)
 
 #### 用户注册
@@ -541,7 +556,7 @@ Content-Type: application/json
 #### 导出翻译数据（需要认证）
 
 ```http
-GET /api/translations/export/json
+GET /api/translations/exportjson
 Authorization: Bearer <jwt-token>
 ```
 

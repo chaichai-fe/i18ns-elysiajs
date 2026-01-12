@@ -53,7 +53,6 @@ export class ConflictError extends AppError {
   }
 }
 
-type EnvLike = { NODE_ENV: string }
 
 type ErrorResponse = {
   success: false
