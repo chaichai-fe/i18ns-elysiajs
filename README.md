@@ -201,6 +201,7 @@ export const businessTagTable = mysqlTable('business_tags', {
   description: varchar({ length: 255 }).notNull(), // 标签描述
   createdAt: timestamp('created_at').notNull().defaultNow(), // 创建时间
   updatedAt: timestamp('updated_at').notNull().defaultNow(), // 更新时间
+  deletedAt: timestamp('deleted_at'), // 软删除时间（为 NULL 表示未删除）
 })
 ```
 
@@ -213,6 +214,7 @@ export const langTagTable = mysqlTable('lang_tags', {
   description: varchar({ length: 255 }).notNull(), // 语言描述
   createdAt: timestamp('created_at').notNull().defaultNow(), // 创建时间
   updatedAt: timestamp('updated_at').notNull().defaultNow(), // 更新时间
+  deletedAt: timestamp('deleted_at'), // 软删除时间（为 NULL 表示未删除）
 })
 ```
 
@@ -229,6 +231,7 @@ export const translationTable = mysqlTable('translation', {
   translations: json('translations') // JSON 格式存储多语言翻译
     .$type<TranslationContent>()
     .notNull(),
+  deletedAt: timestamp('deleted_at'), // 软删除时间（为 NULL 表示未删除）
 })
 
 // 翻译内容类型定义
@@ -296,6 +299,18 @@ bun run db:migrate
 
 # 或者直接推送 schema 到数据库
 bun run db:push
+```
+
+### 软删除（Soft Delete）说明
+
+- 项目中的 **DELETE 接口为软删除**：仅写入 `deleted_at = NOW()`，不会物理删除数据
+- 所有查询默认过滤 `deleted_at IS NULL` 的未删除记录
+- 数据库需要新增字段（存量库推荐用 `bun run db:push`，或手工执行）：
+
+```sql
+ALTER TABLE business_tags ADD COLUMN deleted_at timestamp NULL;
+ALTER TABLE lang_tags ADD COLUMN deleted_at timestamp NULL;
+ALTER TABLE translation ADD COLUMN deleted_at timestamp NULL;
 ```
 
 #### 5. 启动开发服务器

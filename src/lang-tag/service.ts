@@ -1,7 +1,7 @@
 import db from '../db'
 import { langTagTable } from '../db/schema'
 import type { CreateLangTagDto, PaginationDto } from './types'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 export class LangTagService {
   async create(createLangTagDto: CreateLangTagDto) {
@@ -9,6 +9,7 @@ export class LangTagService {
     return await db
       .select()
       .from(langTagTable)
+      .where(isNull(langTagTable.deletedAt))
       .orderBy(sql`${langTagTable.id} DESC`)
       .limit(1)
   }
@@ -20,16 +21,25 @@ export class LangTagService {
     const offset = (page - 1) * pageSize
 
     const [data, total] = await Promise.all([
-      db.select().from(langTagTable).limit(pageSize).offset(offset),
-      db.select({ count: sql<number>`count(*)` }).from(langTagTable),
+      db
+        .select()
+        .from(langTagTable)
+        .where(isNull(langTagTable.deletedAt))
+        .limit(pageSize)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(langTagTable)
+        .where(isNull(langTagTable.deletedAt)),
     ])
 
+    const totalCount = total[0]?.count ?? 0
     return {
       data,
-      total: total[0]?.count ?? 0,
+      total: totalCount,
       page,
       pageSize,
-      totalPages: Math.ceil(total[0]?.count ?? 0 / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize),
     }
   }
 
@@ -37,9 +47,15 @@ export class LangTagService {
     const [deleted] = await db
       .select()
       .from(langTagTable)
-      .where(eq(langTagTable.id, id))
+      .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
 
-    await db.delete(langTagTable).where(eq(langTagTable.id, id))
+    await db
+      .update(langTagTable)
+      .set({
+        deletedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
+      })
+      .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
 
     return deleted
   }
@@ -51,12 +67,18 @@ export class LangTagService {
         ...updateLangTagDto,
         updatedAt: sql`NOW()`,
       })
-      .where(eq(langTagTable.id, id))
+      .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
 
-    return await db.select().from(langTagTable).where(eq(langTagTable.id, id))
+    return await db
+      .select()
+      .from(langTagTable)
+      .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
   }
 
   async findById(id: number) {
-    return await db.select().from(langTagTable).where(eq(langTagTable.id, id))
+    return await db
+      .select()
+      .from(langTagTable)
+      .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
   }
 }

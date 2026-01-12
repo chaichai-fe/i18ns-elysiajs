@@ -12,6 +12,7 @@ export const businessTagTable = mysqlTable('business_tags', {
   description: varchar({ length: 255 }).notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at'),
 })
 
 export const langTagTable = mysqlTable('lang_tags', {
@@ -20,6 +21,7 @@ export const langTagTable = mysqlTable('lang_tags', {
   description: varchar({ length: 255 }).notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at'),
 })
 
 /**
@@ -47,6 +49,7 @@ export const translationTable = mysqlTable('translation', {
     .notNull()
     .references(() => businessTagTable.id),
   translations: json('translations').$type<TranslationContent>().notNull(),
+  deletedAt: timestamp('deleted_at'),
 })
 
 export const userTable = mysqlTable('users', {

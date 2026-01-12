@@ -1,7 +1,7 @@
 import db from '../db'
 import { businessTagTable } from '../db/schema'
 import { type CreateBusinessTagDto, type PaginationDto } from './types'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
 export class BusinessTagService {
   async create(createBusinessTagDto: CreateBusinessTagDto) {
@@ -9,6 +9,7 @@ export class BusinessTagService {
     return await db
       .select()
       .from(businessTagTable)
+      .where(isNull(businessTagTable.deletedAt))
       .orderBy(sql`${businessTagTable.id} DESC`)
       .limit(1)
   }
@@ -20,16 +21,25 @@ export class BusinessTagService {
     const offset = (page - 1) * pageSize
 
     const [data, total] = await Promise.all([
-      db.select().from(businessTagTable).limit(pageSize).offset(offset),
-      db.select({ count: sql<number>`count(*)` }).from(businessTagTable),
+      db
+        .select()
+        .from(businessTagTable)
+        .where(isNull(businessTagTable.deletedAt))
+        .limit(pageSize)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(businessTagTable)
+        .where(isNull(businessTagTable.deletedAt)),
     ])
 
+    const totalCount = total[0]?.count ?? 0
     return {
       data,
-      total: total[0]?.count ?? 0,
+      total: totalCount,
       page,
       pageSize,
-      totalPages: Math.ceil(total[0]?.count ?? 0 / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize),
     }
   }
 
@@ -37,9 +47,15 @@ export class BusinessTagService {
     const [deleted] = await db
       .select()
       .from(businessTagTable)
-      .where(eq(businessTagTable.id, id))
+      .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
 
-    await db.delete(businessTagTable).where(eq(businessTagTable.id, id))
+    await db
+      .update(businessTagTable)
+      .set({
+        deletedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
+      })
+      .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
 
     return deleted
   }
@@ -51,18 +67,18 @@ export class BusinessTagService {
         ...updateBusinessTagDto,
         updatedAt: sql`NOW()`,
       })
-      .where(eq(businessTagTable.id, id))
+      .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
 
     return await db
       .select()
       .from(businessTagTable)
-      .where(eq(businessTagTable.id, id))
+      .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
   }
 
   async findById(id: number) {
     return await db
       .select()
       .from(businessTagTable)
-      .where(eq(businessTagTable.id, id))
+      .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
   }
 }

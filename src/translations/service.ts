@@ -1,7 +1,7 @@
 import db from '../db'
 import { translationTable, langTagTable } from '../db/schema'
 import type { CreateTranslationDto } from './types'
-import { eq, sql, inArray } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 
 export class TranslationsService {
   async create(createTranslationDto: CreateTranslationDto) {
@@ -38,7 +38,12 @@ export class TranslationsService {
     const existingLangTags = await db
       .select({ name: langTagTable.name })
       .from(langTagTable)
-      .where(inArray(langTagTable.name, Array.from(usedLangKeys)))
+      .where(
+        and(
+          inArray(langTagTable.name, Array.from(usedLangKeys)),
+          isNull(langTagTable.deletedAt)
+        )
+      )
 
     const existingLangKeys = new Set(existingLangTags.map((tag) => tag.name))
     const invalidKeys = Array.from(usedLangKeys).filter(
@@ -55,16 +60,24 @@ export class TranslationsService {
   }
 
   async findAll() {
-    return await db.select().from(translationTable)
+    return await db
+      .select()
+      .from(translationTable)
+      .where(isNull(translationTable.deletedAt))
   }
 
   async remove(id: number) {
     const [deleted] = await db
       .select()
       .from(translationTable)
-      .where(eq(translationTable.id, id))
+      .where(and(eq(translationTable.id, id), isNull(translationTable.deletedAt)))
 
-    await db.delete(translationTable).where(eq(translationTable.id, id))
+    await db
+      .update(translationTable)
+      .set({
+        deletedAt: sql`NOW()`,
+      })
+      .where(and(eq(translationTable.id, id), isNull(translationTable.deletedAt)))
 
     return deleted
   }
@@ -73,19 +86,19 @@ export class TranslationsService {
     await db
       .update(translationTable)
       .set(updateTranslationDto)
-      .where(eq(translationTable.id, id))
+      .where(and(eq(translationTable.id, id), isNull(translationTable.deletedAt)))
 
     return await db
       .select()
       .from(translationTable)
-      .where(eq(translationTable.id, id))
+      .where(and(eq(translationTable.id, id), isNull(translationTable.deletedAt)))
   }
 
   async findById(id: number) {
     return await db
       .select()
       .from(translationTable)
-      .where(eq(translationTable.id, id))
+      .where(and(eq(translationTable.id, id), isNull(translationTable.deletedAt)))
   }
 
   async getTranslationsAsJson() {
@@ -94,6 +107,7 @@ export class TranslationsService {
         translations: translationTable.translations,
       })
       .from(translationTable)
+      .where(isNull(translationTable.deletedAt))
     return translations
   }
 }
