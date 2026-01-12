@@ -5,8 +5,8 @@ import { businessTagRoutes } from './business-tag/routes'
 import { langTagRoutes } from './lang-tag/routes'
 import { translationsRoutes } from './translations/routes'
 import { openapi } from '@elysiajs/openapi'
-import { validateDatabaseConnection } from './db/connection'
-import { env } from './config/env'
+import { validateDatabaseConnection } from './db/test-db-connect'
+import { env } from './env-config/env'
 import { createErrorHandler } from './common/errors'
 
 // Database connection validation and application startup function

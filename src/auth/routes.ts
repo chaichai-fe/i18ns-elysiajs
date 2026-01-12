@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { jwt } from '@elysiajs/jwt'
 import { AuthService } from './service'
-import { env } from '../config/env'
+import { env } from '../env-config/env'
 
 const authService = new AuthService()
 

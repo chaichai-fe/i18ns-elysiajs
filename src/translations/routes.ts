@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia'
 import { bearer } from '@elysiajs/bearer'
 import { jwt } from '@elysiajs/jwt'
 import { TranslationsService } from './service'
-import { env } from '../config/env'
+import { env } from '../env-config/env'
 import { BadRequestError, UnauthorizedError } from '../common/errors'
 
 const translationsService = new TranslationsService()

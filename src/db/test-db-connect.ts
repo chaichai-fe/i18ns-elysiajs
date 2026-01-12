@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/mysql2'
 import mysql from 'mysql2/promise'
-import { env } from '../config/env'
+import { env } from '../env-config/env'
 
 /**
  * Validate database connection
@@ -38,3 +38,4 @@ export function initializeDatabase() {
 
   return db
 }
+
