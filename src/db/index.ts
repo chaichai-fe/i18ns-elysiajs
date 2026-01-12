@@ -1,12 +1,6 @@
-import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/mysql2'
+import { env } from '../config/env'
 
-const connectionString = process.env.DATABASE_URL
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is not set')
-}
-
-const db = drizzle(connectionString)
+const db = drizzle(env.DATABASE_URL)
 
 export default db

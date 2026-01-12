@@ -2,6 +2,7 @@ import db from '../db'
 import { langTagTable } from '../db/schema'
 import type { CreateLangTagDto, PaginationDto } from './types'
 import { and, eq, isNull, sql } from 'drizzle-orm'
+import { NotFoundError } from '../common/errors'
 
 export class LangTagService {
   async create(createLangTagDto: CreateLangTagDto) {
@@ -49,6 +50,10 @@ export class LangTagService {
       .from(langTagTable)
       .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
 
+    if (!deleted) {
+      throw new NotFoundError('Language tag not found')
+    }
+
     await db
       .update(langTagTable)
       .set({
@@ -69,16 +74,28 @@ export class LangTagService {
       })
       .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
 
-    return await db
+    const updated = await db
       .select()
       .from(langTagTable)
       .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
+
+    if (updated.length === 0) {
+      throw new NotFoundError('Language tag not found')
+    }
+
+    return updated
   }
 
   async findById(id: number) {
-    return await db
+    const result = await db
       .select()
       .from(langTagTable)
       .where(and(eq(langTagTable.id, id), isNull(langTagTable.deletedAt)))
+
+    if (result.length === 0) {
+      throw new NotFoundError('Language tag not found')
+    }
+
+    return result
   }
 }

@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { jwt } from '@elysiajs/jwt'
 import { AuthService } from './service'
+import { env } from '../config/env'
 
 const authService = new AuthService()
 
@@ -8,27 +9,18 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   .use(
     jwt({
       name: 'jwt',
-      secret: process.env.JWT_SECRET!,
+      secret: env.JWT_SECRET,
       exp: '1d',
     })
   )
   .post(
     '/register',
-    async ({ body, jwt, set }) => {
-      try {
-        const result = await authService.register(body, jwt.sign)
-        return {
-          statusCode: 201,
-          message: 'Registration successful',
-          result,
-        }
-      } catch (error) {
-        set.status = 409
-        return {
-          statusCode: 409,
-          message:
-            error instanceof Error ? error.message : 'Registration failed',
-        }
+    async ({ body, jwt }) => {
+      const result = await authService.register(body, jwt.sign)
+      return {
+        statusCode: 201,
+        message: 'Registration successful',
+        result,
       }
     },
     {
@@ -41,20 +33,12 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   )
   .post(
     '/login',
-    async ({ body, jwt, set }) => {
-      try {
-        const result = await authService.login(body, jwt.sign)
-        return {
-          statusCode: 200,
-          message: 'Login successful',
-          result,
-        }
-      } catch (error) {
-        set.status = 401
-        return {
-          statusCode: 401,
-          message: error instanceof Error ? error.message : 'Login failed',
-        }
+    async ({ body, jwt }) => {
+      const result = await authService.login(body, jwt.sign)
+      return {
+        statusCode: 200,
+        message: 'Login successful',
+        result,
       }
     },
     {

@@ -2,6 +2,7 @@ import db from '../db'
 import { userTable } from '../db/schema'
 import type { CreateUserDto, LoginUserDto, AuthResponse } from './types'
 import { eq } from 'drizzle-orm'
+import { ConflictError, UnauthorizedError } from '../common/errors'
 
 export class AuthService {
   async register(
@@ -15,7 +16,7 @@ export class AuthService {
       .where(eq(userTable.email, createUserDto.email))
 
     if (existingUser.length > 0) {
-      throw new Error('User already exists')
+      throw new ConflictError('User already exists')
     }
 
     // Hash password using Bun's native password hashing
@@ -61,7 +62,7 @@ export class AuthService {
       .where(eq(userTable.email, loginDto.email))
 
     if (!user) {
-      throw new Error('Invalid credentials')
+      throw new UnauthorizedError('Invalid credentials')
     }
 
     // Verify password using Bun's native password verification
@@ -71,7 +72,7 @@ export class AuthService {
     )
 
     if (!isPasswordValid) {
-      throw new Error('Invalid credentials')
+      throw new UnauthorizedError('Invalid credentials')
     }
 
     // Generate JWT token

@@ -2,6 +2,9 @@ import { Elysia, t } from 'elysia'
 import { bearer } from '@elysiajs/bearer'
 import { jwt } from '@elysiajs/jwt'
 import { TranslationsService } from './service'
+import { parseId } from '../common/parse'
+import { env } from '../config/env'
+import { UnauthorizedError } from '../common/errors'
 
 const translationsService = new TranslationsService()
 
@@ -9,7 +12,7 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
   .use(
     jwt({
       name: 'jwt',
-      secret: process.env.JWT_SECRET!,
+      secret: env.JWT_SECRET,
     })
   )
   .use(bearer())
@@ -23,20 +26,12 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
   })
   .post(
     '/',
-    async ({ body, set }) => {
-      try {
-        const result = await translationsService.create(body)
-        return {
-          statusCode: 201,
-          message: 'create success',
-          result,
-        }
-      } catch (error) {
-        set.status = 400
-        return {
-          statusCode: 400,
-          message: error instanceof Error ? error.message : 'Create failed',
-        }
+    async ({ body }) => {
+      const result = await translationsService.create(body)
+      return {
+        statusCode: 201,
+        message: 'create success',
+        result,
       }
     },
     {
@@ -48,41 +43,53 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
       }),
     }
   )
-  .get('/:id', async ({ params, set }) => {
-    try {
-      const result = await translationsService.findById(+params.id)
+  // 仅导出功能做 JWT 校验
+  .get('/exportjson', async ({ bearer, jwt, set }) => {
+    if (!bearer) {
+      throw new UnauthorizedError('Authorization token required')
+    }
+    const payload = await jwt.verify(bearer)
+    if (!payload) {
+      throw new UnauthorizedError('Invalid token')
+    }
+
+    const translations = await translationsService.getTranslationsAsJson()
+    set.headers['Content-Disposition'] = 'attachment; filename=translations.json'
+    set.headers['Content-Type'] = 'application/json'
+    return translations
+  })
+  .get(
+    '/:id',
+    async ({ params }) => {
+      const id = parseId(params.id)
+      const result = await translationsService.findById(id)
       return {
         statusCode: 200,
         message: 'find by id success',
         result,
       }
-    } catch (error) {
-      set.status = 404
-      return {
-        statusCode: 404,
-        message: error instanceof Error ? error.message : 'Not found',
-      }
+    },
+    {
+      params: t.Object({
+        id: t.String({ pattern: '^[1-9]\\d*$' }),
+      }),
     }
-  })
+  )
   .put(
     '/:id',
-    async ({ params, body, set }) => {
-      try {
-        const result = await translationsService.update(+params.id, body)
-        return {
-          statusCode: 200,
-          message: 'update success',
-          result,
-        }
-      } catch (error) {
-        set.status = 400
-        return {
-          statusCode: 400,
-          message: error instanceof Error ? error.message : 'Update failed',
-        }
+    async ({ params, body }) => {
+      const id = parseId(params.id)
+      const result = await translationsService.update(id, body)
+      return {
+        statusCode: 200,
+        message: 'update success',
+        result,
       }
     },
     {
+      params: t.Object({
+        id: t.String({ pattern: '^[1-9]\\d*$' }),
+      }),
       body: t.Object({
         name: t.String({ minLength: 2, maxLength: 100 }),
         description: t.String({ minLength: 5, maxLength: 500 }),
@@ -91,56 +98,20 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
       }),
     }
   )
-  .delete('/:id', async ({ params, set }) => {
-    try {
-      const result = await translationsService.remove(+params.id)
+  .delete(
+    '/:id',
+    async ({ params }) => {
+      const id = parseId(params.id)
+      const result = await translationsService.remove(id)
       return {
         statusCode: 200,
         message: 'delete success',
         result,
       }
-    } catch (error) {
-      set.status = 404
-      return {
-        statusCode: 404,
-        message: error instanceof Error ? error.message : 'Delete failed',
-      }
+    },
+    {
+      params: t.Object({
+        id: t.String({ pattern: '^[1-9]\\d*$' }),
+      }),
     }
-  })
-  // Export interface that requires authentication
-  .get('/export/json', async ({ bearer, jwt, set }) => {
-    try {
-      // Verify if bearer token exists
-      if (!bearer) {
-        set.status = 401
-        return {
-          statusCode: 401,
-          message: 'Authorization token required',
-        }
-      }
-
-      // Verify if JWT token is valid
-      const payload = await jwt.verify(bearer)
-      if (!payload) {
-        set.status = 401
-        return {
-          statusCode: 401,
-          message: 'Invalid token',
-        }
-      }
-
-      const translations = await translationsService.getTranslationsAsJson()
-
-      set.headers['Content-Disposition'] =
-        'attachment; filename=translations.json'
-      set.headers['Content-Type'] = 'application/json'
-
-      return translations
-    } catch (error) {
-      set.status = 500
-      return {
-        statusCode: 500,
-        message: error instanceof Error ? error.message : 'Export failed',
-      }
-    }
-  })
+  )

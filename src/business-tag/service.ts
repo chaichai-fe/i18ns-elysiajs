@@ -2,6 +2,7 @@ import db from '../db'
 import { businessTagTable } from '../db/schema'
 import { type CreateBusinessTagDto, type PaginationDto } from './types'
 import { and, eq, isNull, sql } from 'drizzle-orm'
+import { NotFoundError } from '../common/errors'
 
 export class BusinessTagService {
   async create(createBusinessTagDto: CreateBusinessTagDto) {
@@ -49,6 +50,10 @@ export class BusinessTagService {
       .from(businessTagTable)
       .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
 
+    if (!deleted) {
+      throw new NotFoundError('Business tag not found')
+    }
+
     await db
       .update(businessTagTable)
       .set({
@@ -69,16 +74,28 @@ export class BusinessTagService {
       })
       .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
 
-    return await db
+    const updated = await db
       .select()
       .from(businessTagTable)
       .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
+
+    if (updated.length === 0) {
+      throw new NotFoundError('Business tag not found')
+    }
+
+    return updated
   }
 
   async findById(id: number) {
-    return await db
+    const result = await db
       .select()
       .from(businessTagTable)
       .where(and(eq(businessTagTable.id, id), isNull(businessTagTable.deletedAt)))
+
+    if (result.length === 0) {
+      throw new NotFoundError('Business tag not found')
+    }
+
+    return result
   }
 }
